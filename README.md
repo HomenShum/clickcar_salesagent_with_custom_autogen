@@ -43,10 +43,9 @@ export url1='your_inventory_database_endpoint'
 Run the app using Streamlit:
 
 ```bash
-Copy code
 streamlit run your_app_script.py
-Input your OpenAI API Key in the sidebar when prompted. The app will then be ready to assist with auto parts selection.
 ```
+Input your OpenAI API Key in the sidebar when prompted. The app will then be ready to assist with auto parts selection.
 
 ## How It Works
 The application follows these steps:
