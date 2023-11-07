@@ -194,7 +194,7 @@ with st.container():
                 ],
                 stream=True,
             ):
-                full_response += str(response.choices[0].delta.get("content", ""))
+                full_response += str(response.choices[0].delta)
                 message_placeholder.markdown(full_response + "▌")
             message_placeholder.markdown(full_response + "/// SPANISH /// " + str(translate_query(full_response)))
         st.session_state.messages.append({"role": "assistant", "content": full_response})
