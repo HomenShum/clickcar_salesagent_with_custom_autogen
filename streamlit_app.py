@@ -24,7 +24,7 @@ def memory_summary_agent(memory):
     summarization = client.chat.completions.create(
         model = st.session_state["openai_model"],
         messages=[
-            {"role": "system", "content": 'You specialize at summarizing and keeping track of the user needs to help manage auto part shopping experience'},
+            {"role": "system", "content": 'You specialize at summarizing and keeping track of the user needs to help manage auto part shopping experience. List out concise knowledge base topic:content generated about the needs and preferences.'},
             {"role": "user", "content": memory},
         ],
     )
@@ -204,6 +204,12 @@ with st.container():
         st.session_state.auto_part_criteria.append(auto_part_picking_agent_response)
         retrieve_auto_parts_details_response = retrieve_auto_parts_details(auto_part_picking_agent_response)
         st.session_state.auto_part_details.append(retrieve_auto_parts_details_response)
+
+        #summary
+        st.session_state.summary.append(summarize_all_messages(prompt))
+        with st.sidebar:
+            st.subheader("Summary")
+            st.write(st.session_state.summary[-1])
 
 if st.button("Clear Messages"):
     st.session_state.messages = []
