@@ -5,22 +5,22 @@ ClickCar Chat Agents is a chatbot application that uses GPT-4 to assist users in
 ClickCar Chat Agents is a Streamlit app designed to enhance the auto parts shopping experience. By leveraging the GPT-4 model, it assists users in finding the best auto parts based on their needs and preferences.
 
 ## Features ✨
-Translates queries to Spanish 🇪🇸 to cater to a wider audience.
-Summarizes user needs to manage the auto part shopping experience efficiently 📋.
-Specializes in picking auto parts based on the user's summarized memory 💾.
-Retrieves relevant auto part details from a query and an inventory database 🗂️.
-Provides an interactive chat interface for users to express their auto part needs 💬.
-Employs a tailored system prompt to guide the chat agent in assisting the users 📘.
-Offers a user-friendly Streamlit interface to display auto parts inventory and chat interactions 🖥️.
+1. Translates queries to Spanish 🇪🇸 to cater to a wider audience.
+2. Summarizes user needs to manage the auto part shopping experience efficiently 📋.
+3. Specializes in picking auto parts based on the user's summarized memory 💾.
+4. Retrieves relevant auto part details from a query and an inventory database 🗂️.
+5. Provides an interactive chat interface for users to express their auto part needs 💬.
+6. Employs a tailored system prompt to guide the chat agent in assisting the users 📘.
+7. Offers a user-friendly Streamlit interface to display auto parts inventory and chat interactions 🖥️.
 
 ## Requirements 🛠️
-OpenAI API Key 🔑
-Streamlit 🌟
-Pandas 🐼
-Requests 📤
-Deep Translator 🌐
-Environment Variables 🌍
-url1: Endpoint URL for the auto parts inventory database, to be set in your environment.
+1. OpenAI API Key 🔑
+2. Streamlit 🌟
+3. Pandas 🐼
+4. Requests 📤
+5. Deep Translator 🌐
+6. Environment Variables 🌍
+7. url1: Endpoint URL for the auto parts inventory database, to be set in your environment.
 
 ## Installation 💻
 Before running the app, ensure you have Python installed and then install the required packages:
@@ -50,10 +50,10 @@ The application follows these steps:
 5. Engages with the user in a conversational manner, including playful chit-chat mimicking an Italian gangster movie character to spice up the mood 🎥🍝.
 
 ## Streamlit UI 🎛️
-Chat interface for user queries and assistant responses 💻.
-Sidebar for API key input and model details 🔑.
-Inventory database preview in the sidebar 📊.
-Button to clear messages and reset the conversation 🔄.
+1. Chat interface for user queries and assistant responses 💻.
+2. Sidebar for API key input and model details 🔑.
+3. Inventory database preview in the sidebar 📊.
+4. Button to clear messages and reset the conversation 🔄.
 
 ## Contributing 🤝
 Contributions to improve ClickCar Chat Agents are welcome. Please ensure to update tests as appropriate.
