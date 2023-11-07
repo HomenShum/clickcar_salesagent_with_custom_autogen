@@ -1,4 +1,4 @@
-import openai
+from openai import OpenAI
 import streamlit as st
 import pandas as pd
 import copy
@@ -9,6 +9,8 @@ import re
 import os
 #################### Settings ####################
 
+client = OpenAI()
+
 url1 = st.secrets['url1']
 # url1 = os.environ['url1']
 
@@ -18,7 +20,7 @@ def translate_query(text):
 
 @st.cache_data
 def memory_summary_agent(memory):
-    summarization = openai.ChatCompletion.create(
+    summarization = client.chat.completions.create(
         model = st.session_state["openai_model"],
         messages=[
             {"role": "system", "content": 'You specialize at summarizing and keeping track of the user needs to help manage auto part shopping experience'},
@@ -38,7 +40,7 @@ def auto_part_picking_agent(memory):
     :return: A string with the model's response, aimed at assisting with auto parts selection.
     """
     try:
-        summarization = openai.ChatCompletion.create(
+        summarization = client.chat.completions.create(
             model=st.session_state["openai_model"],
             messages=[
                 {"role": "system", "content": 'You are an assistant specializing in auto parts. Your task is to assist the user in finding the best auto parts based on their needs, preferences, and past interactions.'},
@@ -181,7 +183,7 @@ with st.container():
             message_placeholder = st.empty()
             full_response = ""
             full_spanish_response = ""
-            for response in openai.ChatCompletion.create(
+            for response in client.chat.completions.create(
                 model=st.session_state["openai_model"],
                 messages=[
                     {"role": "system", "content": salesperson_system_prompt},
