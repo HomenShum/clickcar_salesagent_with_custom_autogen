@@ -122,6 +122,9 @@ if "auto_part_criteria" not in st.session_state:
 
 if "auto_part_details" not in st.session_state:
     st.session_state.auto_part_details = []
+
+if "summary" not in st.session_state:
+    st.session_state.summary = []
     
 st.session_state.memory.append("")
 
