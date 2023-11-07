@@ -33,20 +33,22 @@ Before running the app, ensure you have Python installed and then install the re
 
 ```bash
 pip install streamlit pandas requests deep_translator
+```
 
-Set the url1 environment variable:
+## Set the url1 environment variable:
 
 export url1='your_inventory_database_endpoint'
 
-Usage
+## Usage
 Run the app using Streamlit:
 
-bash
+```bash
 Copy code
 streamlit run your_app_script.py
 Input your OpenAI API Key in the sidebar when prompted. The app will then be ready to assist with auto parts selection.
+```
 
-How It Works
+## How It Works
 The application follows these steps:
 
 Translates the user query to Spanish for broader accessibility.
@@ -62,8 +64,8 @@ Button to clear messages and reset the conversation.
 Contributing
 Contributions to improve ClickCar Chat Agents are welcome. Please ensure to update tests as appropriate.
 
-License
-Distributed under the MIT License. See LICENSE for more information.
+## License
+Restricted to usage by whoever approved by Homen Shum via official contract.
 
 
 This README provides a comprehensive guide to your Streamlit app, including features, installation steps, usage instructions, and contribution guidelines. Adjust the file paths and commands according to your repository's structure and personal setup.
