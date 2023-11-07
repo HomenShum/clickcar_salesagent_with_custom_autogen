@@ -43,11 +43,11 @@ Input your OpenAI API Key in the sidebar when prompted. The app will then be rea
 ## How It Works 🧩
 The application follows these steps:
 
-Translates the user query to Spanish for broader accessibility 🌐.
-Summarizes the user's memory for a streamlined shopping experience 🧠.
-Uses a system prompt to guide the chat assistant's interactions 💁‍♂️.
-Retrieves auto parts details from the database based on user queries 🔍.
-Engages with the user in a conversational manner, including playful chit-chat mimicking an Italian gangster movie character to spice up the mood 🎥🍝.
+1. Translates the user query to Spanish for broader accessibility 🌐.
+2. Summarizes the user's memory for a streamlined shopping experience 🧠.
+3. Uses a system prompt to guide the chat assistant's interactions 💁‍♂️.
+4. Retrieves auto parts details from the database based on user queries 🔍.
+5. Engages with the user in a conversational manner, including playful chit-chat mimicking an Italian gangster movie character to spice up the mood 🎥🍝.
 
 ## Streamlit UI 🎛️
 Chat interface for user queries and assistant responses 💻.
