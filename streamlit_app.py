@@ -9,8 +9,8 @@ import re
 import os
 #################### Settings ####################
 
-# url1 = st.secrets['url1']
-url1 = os.environ['url1']
+url1 = st.secrets['url1']
+# url1 = os.environ['url1']
 
 def translate_query(text):
     translated_text = GoogleTranslator(source='english', target='spanish').translate(text)
@@ -66,8 +66,8 @@ def retrieve_auto_parts_details(query):
     :param query: The search query to find auto parts.
     :return: A dictionary containing a list of auto parts with their details.
     """
-    # url = st.secrets['url1']
-    url = os.environ['url1']
+    url = st.secrets['url1']
+    # url = os.environ['url1']
     try:
         response = requests.get(url, params={'q': query})
         response.raise_for_status()
@@ -146,7 +146,8 @@ with st.sidebar:
 if not re.match(r"sk-\S+", selected_key):
     with st.sidebar:
         st.warning("Use your own OpenAI API key for full GPT-4-Turbo Experiece. The context window and training data are improved to 128K Tokens and Up to Apr 2023.")
-    openai.api_key = os.environ['OPENAI_API_KEY']
+    # openai.api_key = os.environ['OPENAI_API_KEY']
+    openai.api_key = st.secrets['OPENAI_API_KEY']
 else:
     st.session_state["openai_api_key"] = selected_key
     openai.api_key = st.session_state["openai_api_key"]
