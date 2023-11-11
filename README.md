@@ -36,7 +36,7 @@ Usage 📝
 Run the app using Streamlit:
 
 ~~~bash
-streamlit st_streaming_query_display.py
+streamlit streamlit_app.py
 ~~~
 Input your OpenAI API Key in the sidebar when prompted. The app will then be ready to assist with auto parts selection.
 
