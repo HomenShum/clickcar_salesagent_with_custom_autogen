@@ -9,14 +9,23 @@ import json
 import re 
 import os
 #################### Settings ####################
+from dotenv import load_dotenv
+import os
 
 client = OpenAI()
 
-url1 = st.secrets['url1']
-# url1 = os.environ['url1']
+# If your .env file is in the same directory as your script
+load_dotenv(".env")
 
-def translate_query(text):
+# url1 = st.secrets['url1']
+url1 = os.environ['url1']
+
+def translate_to_esp(text):
     translated_text = GoogleTranslator(source='english', target='spanish').translate(text)
+    return translated_text
+
+def translate_to_eng(text):
+    translated_text = GoogleTranslator(source='spanish', target='english').translate(text)
     return translated_text
 
 @st.cache_data
@@ -24,37 +33,14 @@ def memory_summary_agent(memory):
     summarization = client.chat.completions.create(
         model = st.session_state["openai_model"],
         messages=[
-            {"role": "system", "content": 'You specialize at summarizing and keeping track of the user needs to help manage auto part shopping experience. List out concise knowledge base topic:content generated about the needs and preferences.'},
+            {"role": "system", "content": 'Summarize the conversation so far:'},
             {"role": "user", "content": memory},
         ],
+        stop=["None"],        
     )
     text = summarization.choices[0].message.content.strip()
     text = re.sub("\s+", " ", text)
     return text
-
-@st.cache_data
-def auto_part_picking_agent(memory):
-    """
-    Function that specializes in picking auto parts based on the user's summarized memory.
-    
-    :param memory: A string containing the summarized memory of user's needs and preferences.
-    :return: A string with the model's response, aimed at assisting with auto parts selection.
-    """
-    try:
-        summarization = client.chat.completions.create(
-            model=st.session_state["openai_model"],
-            messages=[
-                {"role": "system", "content": 'You are an assistant specializing in auto parts. Your task is to assist the user in finding the best auto parts based on their needs, preferences, and past interactions.'},
-                {"role": "user", "content": memory},
-            ],
-        )
-        text = summarization.choices[0].message.content.strip()
-        text = re.sub("\s+", " ", text)
-        return text
-    except Exception as e:
-        # You may want to handle exceptions in a way that is appropriate for your application.
-        st.error("An error occurred while trying to pick auto parts: {}".format(e))
-        return None
 
 @st.cache_data
 def summarize_all_messages(message):
@@ -84,10 +70,10 @@ def retrieve_auto_parts_details(query):
     except requests.exceptions.RequestException as e:
         # This will capture any errors related to the request
         return {'error': str(e)}
-
 # Set the system and user prompts
 
 salesperson_system_prompt = (
+    "Keep conversation short and simple. Encourage user to focus on one issue at a time."
     "Concise Response. Customer Orientation: Prioritize the customer's needs and recommend products that align with these needs.\n"
     "Politeness and Education: Always be polite, patient, and courteous to create a welcoming atmosphere.\n"
     "Good Listening: Pay attention to the customer's needs and preferences for personalized recommendations.\n"
@@ -125,12 +111,13 @@ if "auto_part_details" not in st.session_state:
 
 if "summary" not in st.session_state:
     st.session_state.summary = []
-    
+
 st.session_state.memory.append("")
 
 st.session_state["openai_model"] = "gpt-3.5-turbo-1106"
 st.session_state["openai_model_context_window"] = "16K Tokens"
 st.session_state["openai_model_training_data"] = "Up to Sep 2021"
+
 
 #################### Main ####################
 ### OpenAI API Key Management ###
@@ -152,8 +139,7 @@ with st.sidebar:
 if not re.match(r"sk-\S+", selected_key):
     with st.sidebar:
         st.warning("Use your own OpenAI API key for full GPT-4-Turbo Experiece. The context window and training data are improved to 128K Tokens and Up to Apr 2023.")
-    # openai.api_key = os.environ['OPENAI_API_KEY']
-    openai.api_key = st.secrets['OPENAI_API_KEY']
+    openai.api_key = os.environ['OPENAI_API_KEY']
 else:
     st.session_state["openai_api_key"] = selected_key
     openai.api_key = st.session_state["openai_api_key"]
@@ -165,56 +151,105 @@ else:
 ### Streamlit UI ###
 st.title("ClickCar Chat Agents")
 st.subheader("What auto parts are you looking for from ClickCar store?\n")
-st.subheader(translate_query("What auto parts are you looking for from ClickCar store?"))
+st.subheader(translate_to_esp("What auto parts are you looking for from ClickCar store?"))
 
-###
-for message in st.session_state.messages:
-    with st.chat_message(message["role"]):
-        st.markdown(message["content"])
-###
 
 with st.sidebar:
-    st.header("Preview inventory database")
+    if st.button("Translate to Espanol"):
+        for i in st.session_state.messages:
+            i["content"] = translate_to_esp(i["content"])
+        st.session_state.auto_part_criteria.append(translate_to_esp(st.session_state.auto_part_criteria[-1]))
+        st.session_state.summary.append(translate_to_esp(st.session_state.summary[-1]))
+        st.rerun()
 
-with st.container():
-    if prompt := st.chat_input("Any auto part that you are looking for in ClickCar?"):
-        st.session_state.memory.append(memory_summary_agent(". New information from User about user needs: " + prompt + ". Previous information: " + st.session_state.memory[-1]))
-        st.session_state.messages.append({"role": "user", "content": prompt})
-        with st.chat_message("user"):
-            st.markdown(prompt)
-
-        with st.chat_message("assistant"):
-            message_placeholder = st.empty()
-            full_response = ""
-            full_spanish_response = ""
-            for response in client.chat.completions.create(
-                model=st.session_state["openai_model"],
-                messages=[
-                    {"role": "system", "content": salesperson_system_prompt},
-                    {"role": "user", "content": ". Previous information: "+ st.session_state.memory[-1]},
-                    {"role": "user", "content": ". New user prompt: "+ prompt},
-                    {"role": "user", "content": ". New information from inventory database: "+ str(st.session_state.auto_part_details)},
-                ],
-                stream=True,
-            ):
-                full_response += str(response.choices[0].delta.content)
-                message_placeholder.markdown(full_response + "▌")
-            message_placeholder.markdown(full_response + "/// SPANISH /// " + str(translate_query(full_response)))
-        st.session_state.messages.append({"role": "assistant", "content": full_response})
-        st.session_state.memory.append(memory_summary_agent(". New information from Assistant about user needs: " + full_response + ". Previous information: " + st.session_state.memory[-1]))
-        total_memory = st.session_state.memory[-1]
-        auto_part_picking_agent_response = auto_part_picking_agent(total_memory)
-        st.session_state.auto_part_criteria.append(auto_part_picking_agent_response)
-        retrieve_auto_parts_details_response = retrieve_auto_parts_details(auto_part_picking_agent_response)
-        st.session_state.auto_part_details.append(retrieve_auto_parts_details_response)
-
-        #summary
-        st.session_state.summary.append(summarize_all_messages(prompt))
-        with st.sidebar:
-            st.subheader("Summary")
-            st.write(st.session_state.summary[-1])
+    if st.button("Translate to English"):
+        for i in st.session_state.messages:
+            i["content"] = translate_to_eng(i["content"])
+        st.session_state.auto_part_criteria.append(translate_to_eng(st.session_state.auto_part_criteria[-1]))
+        st.session_state.summary.append(translate_to_eng(st.session_state.summary[-1]))
+        st.rerun()
 
 if st.button("Clear Messages"):
     st.session_state.messages = []
     st.session_state.memory = []
+    st.session_state.auto_part_criteria = []
+    st.session_state.auto_part_details = []
+    st.session_state.summary = []
     st.rerun()
+else:
+    ###
+    for message in st.session_state.messages:
+        with st.chat_message(message["role"]):
+            st.markdown(message["content"])
+    ###
+
+    with st.container():
+        if prompt := st.chat_input("Any auto part that you are looking for in ClickCar?"):
+            st.session_state.messages.append({"role": "user", "content": prompt})
+            with st.chat_message("user"):
+                st.markdown(prompt)
+
+            with st.chat_message("assistant"):
+                message_placeholder = st.empty()
+                full_response = ""
+                full_spanish_response = ""
+                for response in client.chat.completions.create(
+                    model=st.session_state["openai_model"],
+                    messages=[
+                        {"role": "system", "content": salesperson_system_prompt},
+                        {"role": "user", "content": ". Previous information: "+ st.session_state.memory[-1]},
+                        {"role": "user", "content": ". New user prompt: "+ prompt},
+                        {"role": "user", "content": ". New information from inventory database: "+ str(st.session_state.auto_part_details)},
+                    ],
+                    stop=["None"],
+                    stream=True,
+                ):
+                    full_response += str(response.choices[0].delta.content)
+                    message_placeholder.markdown(full_response + "▌")
+                message_placeholder.markdown(full_response + "\n")
+                st.session_state.messages.append({"role": "assistant", "content": full_response})
+                st.session_state.memory.append(memory_summary_agent(". New information from Assistant about user needs: " 
+                                                                    + full_response 
+                                                                    + ". Previous information: " 
+                                                                    + st.session_state.memory[-1]
+                                                                    + " User Prompt: "
+                                                                    + prompt
+                                                                    ))
+                #summary
+                st.session_state.summary.append(summarize_all_messages(prompt))
+
+
+    with st.sidebar:
+        total_memory = st.session_state.memory[-1]
+
+        st.header("Auto Part Criteria Extracted")
+        message_placeholder = st.empty()
+        full_response = ""
+        full_spanish_response = ""
+        for response in client.chat.completions.create(
+            model=st.session_state["openai_model"],
+            messages=[
+                {"role": "system", "content": 
+                    'Concise bullet points of auto part criteria:'},
+                {"role": "user", "content": total_memory},
+            ],
+            stop=["None"],
+            stream=True,
+        ):
+            full_response += str(response.choices[0].delta.content)
+            message_placeholder.markdown(full_response + "▌")
+        st.session_state.auto_part_criteria.append(full_response)
+        message_placeholder.markdown(st.session_state.auto_part_criteria[-1])
+
+
+        st.subheader("Preview Inventory Database Query")
+        retrieve_auto_parts_details_response = retrieve_auto_parts_details(full_response)
+        st.session_state.auto_part_details.append(retrieve_auto_parts_details_response)
+
+    with st.sidebar:
+        st.subheader("Summary")
+        if not st.session_state.summary:
+            st.write("No summary yet.")
+        else:
+            st.write(st.session_state.summary[-1])
+
