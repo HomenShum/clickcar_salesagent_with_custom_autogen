@@ -19,6 +19,7 @@ load_dotenv(".env")
 
 # url1 = st.secrets['url1']
 url1 = os.environ['url1']
+url3 = os.environ['url3']
 
 def translate_to_esp(text):
     translated_text = GoogleTranslator(source='english', target='spanish').translate(text)
@@ -57,6 +58,32 @@ def retrieve_auto_parts_details(query):
     """
     url = st.secrets['url1']
     # url = os.environ['url1']
+    try:
+        response = requests.get(url, params={'q': query})
+        response.raise_for_status()
+        # We expect the response to be a JSON with a 'results' field containing the parts details
+        part_details = response.json().get('results', [])
+        st.session_state.df = pd.DataFrame(part_details)
+        with st.sidebar:
+            st.dataframe(st.session_state.df)
+        st.session_state.memory.append(memory_summary_agent(". New data pulled from database that may or may not match user needs: " + str(part_details) + ". Previous information regarding user needs: " + st.session_state.memory[-1]))
+        return {'part_details': part_details}
+    except requests.exceptions.RequestException as e:
+        # This will capture any errors related to the request
+        return {'error': str(e)}
+# Set the system and user prompts
+
+
+@st.cache_data
+def precision_retrieve_auto_parts_details(query):
+    """
+    Retrieve the most relevant auto part details based on a given query.
+
+    :param url: The endpoint URL to make the request to.
+    :param query: The search query to find auto parts.
+    :return: A dictionary containing a list of auto parts with their details.
+    """
+    url = st.secrets['url3']
     try:
         response = requests.get(url, params={'q': query})
         response.raise_for_status()
@@ -176,80 +203,83 @@ if st.button("Clear Messages"):
     st.session_state.auto_part_details = []
     st.session_state.summary = []
     st.rerun()
-else:
-    ###
-    for message in st.session_state.messages:
-        with st.chat_message(message["role"]):
-            st.markdown(message["content"])
-    ###
+###
+for message in st.session_state.messages:
+    with st.chat_message(message["role"]):
+        st.markdown(message["content"])
+###
 
-    with st.container():
-        if prompt := st.chat_input("Any auto part that you are looking for in ClickCar?"):
-            st.session_state.messages.append({"role": "user", "content": prompt})
-            with st.chat_message("user"):
-                st.markdown(prompt)
+with st.container():
+    if prompt := st.chat_input("Any auto part that you are looking for in ClickCar?"):
+        st.session_state.messages.append({"role": "user", "content": prompt})
+        with st.chat_message("user"):
+            st.markdown(prompt)
 
-            with st.chat_message("assistant"):
-                message_placeholder = st.empty()
-                full_response = ""
-                full_spanish_response = ""
-                for response in client.chat.completions.create(
-                    model=st.session_state["openai_model"],
-                    messages=[
-                        {"role": "system", "content": salesperson_system_prompt},
-                        {"role": "user", "content": ". Previous information: "+ st.session_state.memory[-1]},
-                        {"role": "user", "content": ". New user prompt: "+ prompt},
-                        {"role": "user", "content": ". New information from inventory database: "+ str(st.session_state.auto_part_details)},
-                    ],
-                    stop=["None"],
-                    stream=True,
-                ):
-                    full_response += str(response.choices[0].delta.content)
-                    message_placeholder.markdown(full_response + "▌")
-                message_placeholder.markdown(full_response + "\n")
-                st.session_state.messages.append({"role": "assistant", "content": full_response})
-                st.session_state.memory.append(memory_summary_agent(". New information from Assistant about user needs: " 
-                                                                    + full_response 
-                                                                    + ". Previous information: " 
-                                                                    + st.session_state.memory[-1]
-                                                                    + " User Prompt: "
-                                                                    + prompt
-                                                                    ))
-                #summary
-                st.session_state.summary.append(summarize_all_messages(prompt))
-
-
-    with st.sidebar:
-        total_memory = st.session_state.memory[-1]
-
-        st.header("Auto Part Criteria Extracted")
-        message_placeholder = st.empty()
-        full_response = ""
-        full_spanish_response = ""
-        for response in client.chat.completions.create(
-            model=st.session_state["openai_model"],
-            messages=[
-                {"role": "system", "content": 
-                    'Concise bullet points of auto part criteria:'},
-                {"role": "user", "content": total_memory},
-            ],
-            stop=["None"],
-            stream=True,
-        ):
-            full_response += str(response.choices[0].delta.content)
-            message_placeholder.markdown(full_response + "▌")
-        st.session_state.auto_part_criteria.append(full_response)
-        message_placeholder.markdown(st.session_state.auto_part_criteria[-1])
+        with st.chat_message("assistant"):
+            message_placeholder = st.empty()
+            full_response = ""
+            full_spanish_response = ""
+            for response in client.chat.completions.create(
+                model=st.session_state["openai_model"],
+                messages=[
+                    {"role": "system", "content": salesperson_system_prompt},
+                    {"role": "user", "content": ". Previous information: "+ st.session_state.memory[-1]},
+                    {"role": "user", "content": ". New user prompt: "+ prompt},
+                    {"role": "user", "content": ". New information from inventory database: "+ str(st.session_state.auto_part_details)},
+                ],
+                stop=["None"],
+                stream=True,
+            ):
+                full_response += str(response.choices[0].delta.content)
+                message_placeholder.markdown(full_response + "▌")
+            message_placeholder.markdown(full_response + "\n")
+            st.session_state.messages.append({"role": "assistant", "content": full_response})
+            st.session_state.memory.append(memory_summary_agent(". New information from Assistant about user needs: " 
+                                                                + full_response 
+                                                                + ". Previous information: " 
+                                                                + st.session_state.memory[-1]
+                                                                + " User Prompt: "
+                                                                + prompt
+                                                                ))
+            #summary
+            st.session_state.summary.append(summarize_all_messages(prompt))
 
 
-        st.subheader("Preview Inventory Database Query")
-        retrieve_auto_parts_details_response = retrieve_auto_parts_details(full_response)
-        st.session_state.auto_part_details.append(retrieve_auto_parts_details_response)
+with st.sidebar:
+    total_memory = st.session_state.memory[-1]
 
-    with st.sidebar:
-        st.subheader("Summary")
-        if not st.session_state.summary:
-            st.write("No summary yet.")
-        else:
-            st.write(st.session_state.summary[-1])
+    st.header("Auto Part Criteria Extracted")
+    message_placeholder = st.empty()
+    full_response = ""
+    full_spanish_response = ""
+    for response in client.chat.completions.create(
+        model=st.session_state["openai_model"],
+        messages=[
+            {"role": "system", "content": 
+                'Concise bullet points of auto part criteria:'},
+            {"role": "user", "content": total_memory},
+        ],
+        stop=["None"],
+        stream=True,
+    ):
+        full_response += str(response.choices[0].delta.content)
+        message_placeholder.markdown(full_response + "▌")
+    st.session_state.auto_part_criteria.append(full_response)
+    message_placeholder.markdown(st.session_state.auto_part_criteria[-1])
+
+
+    st.subheader("Preview Inventory Database Query")
+    retrieve_auto_parts_details_response = retrieve_auto_parts_details(full_response)
+    st.session_state.auto_part_details.append(retrieve_auto_parts_details_response)
+
+    st.subheader("Summary")
+    if not st.session_state.summary:
+        st.write("No summary yet.")
+    else:
+        st.write(st.session_state.summary[-1])
+
+    st.subheader("Precision Inventory Database Query")
+    precision_retrieve_auto_parts_details_response = precision_retrieve_auto_parts_details(full_response)
+    st.session_state.auto_part_details.append(precision_retrieve_auto_parts_details_response)
+
 
