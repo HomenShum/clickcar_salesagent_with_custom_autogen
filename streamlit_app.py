@@ -9,13 +9,12 @@ import json
 import re 
 import os
 #################### Settings ####################
-from dotenv import load_dotenv
-import os
+# import os
 
 client = OpenAI()
 
 # If your .env file is in the same directory as your script
-load_dotenv(".env")
+# load_dotenv(".env")
 
 url1 = st.secrets['url1']
 url3 = st.secrets['url3']
