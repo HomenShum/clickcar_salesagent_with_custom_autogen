@@ -17,9 +17,11 @@ client = OpenAI()
 # If your .env file is in the same directory as your script
 load_dotenv(".env")
 
-# url1 = st.secrets['url1']
-url1 = os.environ['url1']
-url3 = os.environ['url3']
+url1 = st.secrets['url1']
+url3 = st.secrets['url3']
+
+# url1 = os.environ['url1']
+# url3 = os.environ['url3']
 
 def translate_to_esp(text):
     translated_text = GoogleTranslator(source='english', target='spanish').translate(text)
@@ -166,7 +168,7 @@ with st.sidebar:
 if not re.match(r"sk-\S+", selected_key):
     with st.sidebar:
         st.warning("Use your own OpenAI API key for full GPT-4-Turbo Experiece. The context window and training data are improved to 128K Tokens and Up to Apr 2023.")
-    openai.api_key = os.environ['OPENAI_API_KEY']
+    openai.api_key = st.secrets['OPENAI_API_KEY']
 else:
     st.session_state["openai_api_key"] = selected_key
     openai.api_key = st.session_state["openai_api_key"]
