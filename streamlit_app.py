@@ -348,67 +348,66 @@ for message in st.session_state.messages:
         st.markdown(message["content"])
 ###
 
-with st.container():
-    count = st.number_input('Insert desired number of retrieval', value=3, max_value=10, min_value=1, step=1)
+count = st.number_input('Insert desired number of retrieval', value=3, max_value=10, min_value=1, step=1)
 
-    if prompt := st.chat_input("Any auto part that you are looking for in ClickCar?"):
-        st.session_state.messages.append({"role": "user", "content": prompt})
-        with st.chat_message("user"):
-            st.markdown(prompt)
+if prompt := st.chat_input("Any auto part that you are looking for in ClickCar?"):
+    st.session_state.messages.append({"role": "user", "content": prompt})
+    with st.chat_message("user"):
+        st.markdown(prompt)
 
-        # this is the auto part criteria extracted from user prompt
+    # this is the auto part criteria extracted from user prompt
 
-        auto_part_criteria_response = ""
+    auto_part_criteria_response = ""
+    for response in client.chat.completions.create(
+        model=st.session_state["openai_model"],
+        messages=[{"role": "system", "content": 'List most confident potential auto part needs using key words, stay concise.'}, 
+                    {"role": "user", "content": 'User input:' + prompt}],
+        stream=True,
+    ):
+        auto_part_criteria_response += str(response.choices[0].delta.content)
+    st.session_state.auto_part_criteria.append(auto_part_criteria_response)
+
+    sparse_dense_retrieval_response = sparse_dense_retrieval(auto_part_criteria_response, count)
+    if "error" in sparse_dense_retrieval_response:
+        st.session_state.auto_part_details.append(f"Based on user input: {prompt}. No auto part found.")
+        st.stop()
+    else:
+        st.session_state.auto_part_details.append(str(sparse_dense_retrieval_response))
+
+
+    with st.chat_message("assistant"):
+        message_placeholder = st.empty()
+        full_response = ""
+        full_spanish_response = ""
         for response in client.chat.completions.create(
             model=st.session_state["openai_model"],
-            messages=[{"role": "system", "content": 'List most confident potential auto part needs using key words, stay concise.'}, 
-                        {"role": "user", "content": 'User input:' + prompt}],
+            messages=[
+                {"role": "system", "content": salesperson_system_prompt},
+                {"role": "system", "content": ". \nConversation so far:\n"+ st.session_state.memory[-1]},
+                {"role": "user", "content": ". \nNew user prompt: \n"+ prompt},
+                {"role": "user", "content": ". \nNew information from auto part inventory database: \n"+ str(st.session_state.auto_part_details[-1])},
+                {"role": "user", "content": ". \nPick one to five most confident auto part recommendation given information from user needs: \n"+ auto_part_criteria_response + "\nShow Confidence: Low | Medium | High"},
+            ],
+            stop=["None"],
             stream=True,
         ):
-            auto_part_criteria_response += str(response.choices[0].delta.content)
-        st.session_state.auto_part_criteria.append(auto_part_criteria_response)
+            full_response += str(response.choices[0].delta.content)
+            message_placeholder.markdown(full_response + "▌")
+        message_placeholder.markdown(full_response + "\n")
+        st.session_state.messages.append({"role": "assistant", "content": full_response})
+        st.session_state.memory.append(memory_summary_agent(". New information from Assistant about user needs: " 
+                                                            + auto_part_criteria_response 
+                                                            + ". Response to user:" 
+                                                            + full_response 
+                                                            + ". Previous information: " 
+                                                            + st.session_state.memory[-1]
+                                                            + " User Prompt: "
+                                                            + prompt
+                                                            ))
+        #summary
+        st.session_state.summary.append(summarize_all_messages(prompt))
 
-        sparse_dense_retrieval_response = sparse_dense_retrieval(auto_part_criteria_response, count)
-        if "error" in sparse_dense_retrieval_response:
-            st.session_state.auto_part_details.append(f"Based on user input: {prompt}. No auto part found.")
-            st.stop()
-        else:
-            st.session_state.auto_part_details.append(str(sparse_dense_retrieval_response))
-
-
-        with st.chat_message("assistant"):
-            message_placeholder = st.empty()
-            full_response = ""
-            full_spanish_response = ""
-            for response in client.chat.completions.create(
-                model=st.session_state["openai_model"],
-                messages=[
-                    {"role": "system", "content": salesperson_system_prompt},
-                    {"role": "system", "content": ". \nConversation so far:\n"+ st.session_state.memory[-1]},
-                    {"role": "user", "content": ". \nNew user prompt: \n"+ prompt},
-                    {"role": "user", "content": ". \nNew information from auto part inventory database: \n"+ str(st.session_state.auto_part_details[-1])},
-                    {"role": "user", "content": ". \nPick one to five most confident auto part recommendation given information from user needs: \n"+ auto_part_criteria_response + "\nShow Confidence: Low | Medium | High"},
-                ],
-                stop=["None"],
-                stream=True,
-            ):
-                full_response += str(response.choices[0].delta.content)
-                message_placeholder.markdown(full_response + "▌")
-            message_placeholder.markdown(full_response + "\n")
-            st.session_state.messages.append({"role": "assistant", "content": full_response})
-            st.session_state.memory.append(memory_summary_agent(". New information from Assistant about user needs: " 
-                                                                + auto_part_criteria_response 
-                                                                + ". Response to user:" 
-                                                                + full_response 
-                                                                + ". Previous information: " 
-                                                                + st.session_state.memory[-1]
-                                                                + " User Prompt: "
-                                                                + prompt
-                                                                ))
-            #summary
-            st.session_state.summary.append(summarize_all_messages(prompt))
-
-print("\ndebug prompt: ", prompt, "\n")
+# print("\ndebug prompt: ", prompt, "\n")
 
 
 def parse_and_format_part_details(details):
