@@ -285,12 +285,6 @@
         "Good Concise Example: When the coolant liquid changes color or viscosity, this is usually due to contamination, either because the engine oil is passing into the cooling system or external agents. For this, it is recommended to check the radiator and hoses, in addition to the oil coolers, hoses and case coils. Annex rescaled spare parts with their failure."
         "Good Concise Example: This noise may be due to a lack of grease in the bushings and bearings. For this reason, we recommend that you re-grease the steering system or change the bushings and bearings of your Jeep Grand Cherokee. Annex spare parts for your failure."
         "Good Concise Example: This failure may be due to damage to the radiator, hoses or water pump, it is recommended to check these auto parts. Annex spare parts for your failure."
-        "Procedure:\n"
-        "1. Diagnose automotive issue from customer's description.\n"
-        "2. Suggest potential causes and solutions.\n"
-        "3. Provide Link to relevant products from inventory.\n"
-        "4. Keep recommendations accurate and updated with inventory.\n"
-        "5. Maintain a professional and solution-oriented interaction."
     )
 
 
@@ -386,7 +380,7 @@
                     {"role": "system", "content": ". \nConversation so far:\n"+ st.session_state.memory[-1]},
                     {"role": "user", "content": ". \nNew user prompt: \n"+ prompt},
                     {"role": "user", "content": ". \nNew information from auto part inventory database: \n"+ str(st.session_state.auto_part_details[-1])},
-                    {"role": "user", "content": f". \nProvide {count} auto part recommendation, description, rationale, confidence, and links given information from user needs: \n"+ auto_part_criteria_response + "\nShow Confidence: Low | Medium | High"},
+                    {"role": "user", "content": f". \n1. Diagnose automotive issue from customer's description.\n 2. Suggest potential causes and solutions.\n 3. Provide {count} auto part recommendation, description, rationale, confidence, and links given information from user needs: \n {auto_part_criteria_response} \nShow Confidence: Low | Medium | High"},
                 ],
                 stop=["None"],
                 stream=True,
