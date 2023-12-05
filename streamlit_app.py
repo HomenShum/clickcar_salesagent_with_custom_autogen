@@ -86,9 +86,9 @@ def sparse_dense_retrieval(query, count):
     print("len docs:", len(documents))
 
 
-    OptimumEmbedding.create_and_save_optimum_model(
-        "BAAI/bge-base-en-v1.5", "./bge_onnx"
-    )
+    # OptimumEmbedding.create_and_save_optimum_model(
+    #     "BAAI/bge-base-en-v1.5", "./bge_onnx"
+    # )
 
     embed_model = OptimumEmbedding(folder_name="./bge_onnx", embed_batch_size=100)
     service_context = ServiceContext.from_defaults(embed_model = embed_model)
@@ -386,7 +386,7 @@ if prompt := st.chat_input("Any auto part that you are looking for in ClickCar?"
                 {"role": "system", "content": ". \nConversation so far:\n"+ st.session_state.memory[-1]},
                 {"role": "user", "content": ". \nNew user prompt: \n"+ prompt},
                 {"role": "user", "content": ". \nNew information from auto part inventory database: \n"+ str(st.session_state.auto_part_details[-1])},
-                {"role": "user", "content": ". \nPick one to five most confident auto part recommendation given information from user needs: \n"+ auto_part_criteria_response + "\nShow Confidence: Low | Medium | High"},
+                {"role": "user", "content": ". \nProvide one to five high confident auto part recommendation with link given information from user needs: \n"+ auto_part_criteria_response + "\nShow Confidence: Low | Medium | High"},
             ],
             stop=["None"],
             stream=True,
@@ -407,7 +407,7 @@ if prompt := st.chat_input("Any auto part that you are looking for in ClickCar?"
         #summary
         st.session_state.summary.append(summarize_all_messages(prompt))
 
-# print("\ndebug prompt: ", prompt, "\n")
+print("\ndebug prompt: ", prompt, "\n")
 
 
 def parse_and_format_part_details(details):
