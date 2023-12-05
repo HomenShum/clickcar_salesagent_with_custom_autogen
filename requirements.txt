@@ -2,3 +2,10 @@ pandas
 streamlit
 openai
 deep-translator
+python-dotenv
+llama_index
+openpyxl
+transformers
+optimum[exporters]
+rank-bm25
+cohere
