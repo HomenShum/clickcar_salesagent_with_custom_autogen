@@ -32,6 +32,9 @@ import cohere
 
 from openai import OpenAI as official_OpenAI
 
+if "count" not in st.session_state:
+    st.session_state.count = 3
+
 @st.cache_data
 def sparse_dense_retrieval(query, count):
 
@@ -269,7 +272,7 @@ def precision_retrieve_auto_parts_details(query):
 # )
 
 salesperson_system_prompt = (
-    "Objective: Recommend Auto Parts from Inventory Database and Provide Link.\n"
+    "Objective: Recommend Auto Parts from Inventory Database and Provide Link using Schema.\n"
     "Good Concise Example: For the Hyundai Tucson suspension system, I recommend that you change the entire set of shock absorbers, bushings and bearings, it is also recommended to check the engine bases. Annex recommended products:"
     "Good Concise Example: If your vehicle's battery is discharging, it could be that the battery is in poor condition, you should check at your nearest maintenance center, it could also be the alternator. Here we show you some related products."
     "Good Concise Example: When you notice white smoke coming out of your hood, it may have several reasons, the main reasons may be engine overheating, damage to the cooling system or water passing into the combustion chamber or injection system. For this you must check your cooling system, and the smoke coming out of the exhaust pipe. Here are some related products, with their possible failure."
@@ -285,6 +288,25 @@ salesperson_system_prompt = (
     "Good Concise Example: When the coolant liquid changes color or viscosity, this is usually due to contamination, either because the engine oil is passing into the cooling system or external agents. For this, it is recommended to check the radiator and hoses, in addition to the oil coolers, hoses and case coils. Annex rescaled spare parts with their failure."
     "Good Concise Example: This noise may be due to a lack of grease in the bushings and bearings. For this reason, we recommend that you re-grease the steering system or change the bushings and bearings of your Jeep Grand Cherokee. Annex spare parts for your failure."
     "Good Concise Example: This failure may be due to damage to the radiator, hoses or water pump, it is recommended to check these auto parts. Annex spare parts for your failure."
+    """
+    Schema:
+    For the Hyundai Tucson suspension system;
+    I recommend that you change the entire set of shock absorbers, bushings and bearings
+    It is also recommended to check the engine bases. 
+
+    Recommended products:	
+    Link 1. https://www.clickcar.store/products/amortiguadores-hyundai-tucson-derecho-trasero-marca-master-king?_pos=1&_sid=66f9b566e&_ss=r	
+    Link 2. https://www.clickcar.store/products/amortiguadores-hyundai-tucson-izquierdo-trasero-marca-master-king?_pos=2&_sid=66f9b566e&_ss=r	
+    Link 3. https://www.clickcar.store/products/base-de-motor-para-hyundai-tucson-motor-2-0-lts-2006-s-m?_pos=5&_sid=66f9b566e&_ss=r
+
+    Confidence Score: 
+    High
+
+    Rationale:
+    1. The user is looking for a suspension system for a Hyundai Tucson.
+    2. The user is looking for a suspension system for a Hyundai Tucson.
+    3. The user is looking for a suspension system for a Hyundai Tucson.
+    """
 )
 
 
@@ -305,6 +327,9 @@ if "auto_part_details" not in st.session_state:
 
 if "summary" not in st.session_state:
     st.session_state.summary = []
+
+if "auto_part_image_link" not in st.session_state:
+    st.session_state.auto_part_image_link = []
 
 st.session_state.memory.append("")
 
@@ -342,7 +367,6 @@ for message in st.session_state.messages:
         st.markdown(message["content"])
 ###
 
-count = st.number_input('Insert desired number of retrieval', value=3, max_value=10, min_value=1, step=1)
 
 if prompt := st.chat_input("Any auto part that you are looking for in ClickCar?"):
     st.session_state.messages.append({"role": "user", "content": prompt})
@@ -361,7 +385,7 @@ if prompt := st.chat_input("Any auto part that you are looking for in ClickCar?"
         auto_part_criteria_response += str(response.choices[0].delta.content)
     st.session_state.auto_part_criteria.append(auto_part_criteria_response)
 
-    sparse_dense_retrieval_response = sparse_dense_retrieval(auto_part_criteria_response, count)
+    sparse_dense_retrieval_response = sparse_dense_retrieval(auto_part_criteria_response, st.session_state.count)
     if "error" in sparse_dense_retrieval_response:
         st.session_state.auto_part_details.append(f"Based on user input: {prompt}. No auto part found.")
         st.stop()
@@ -377,10 +401,10 @@ if prompt := st.chat_input("Any auto part that you are looking for in ClickCar?"
             model=st.session_state["openai_model"],
             messages=[
                 {"role": "system", "content": salesperson_system_prompt},
-                {"role": "system", "content": ". \nConversation so far:\n"+ st.session_state.memory[-1]},
-                {"role": "user", "content": ". \nNew user prompt: \n"+ prompt},
-                {"role": "user", "content": ". \nNew information from auto part inventory database: \n"+ str(st.session_state.auto_part_details[-1])},
-                {"role": "user", "content": f". \n1. Diagnose automotive issue from customer's description.\n 2. Suggest potential causes and solutions.\n 3. Provide {count} auto part recommendation, description, rationale, confidence, and links given information from user needs: \n {auto_part_criteria_response} \nShow Confidence: Low | Medium | High"},
+                {"role": "user", "content": ". \nPriornConversation:\n"+ st.session_state.memory[-1] + ". \nIgnore this information if it is not relevant to user needs. \n"},
+                {"role": "user", "content": ". \nUser prompt: \n"+ prompt + ". \n User needs: \n" + auto_part_criteria_response},
+                {"role": "user", "content": ". \nRetrieved auto part from inventory database: \n"+ str(st.session_state.auto_part_details[-1])},
+                # {"role": "user", "content": f". \n1. Diagnose automotive issue from customer's description.\n 2. Suggest potential causes and solutions.\n 3. Provide {count} auto part recommendation, description, rationale, confidence, and links given information from user needs: \n {auto_part_criteria_response} \nShow Confidence: Low | Medium | High"},
             ],
             stop=["None"],
             stream=True,
@@ -464,6 +488,13 @@ with st.sidebar:
 
     st.divider()
 
+    count = st.number_input('Insert desired number of retrieval', value=3, max_value=10, min_value=1, step=1)
+
+    if count:
+        st.session_state.count = count
+    
+    st.divider()
+
     st.header("Auto Part Criteria")
     if not st.session_state.auto_part_criteria:
         st.write("No auto part criteria yet.")
@@ -477,3 +508,16 @@ with st.sidebar:
         st.write("No summary yet.")
     else:
         st.write(st.session_state.summary[-1])
+
+    st.divider()
+
+    # Test Image Feature
+    st.header("Auto Part Image (Test)")
+    st.session_state.auto_part_image_link.append("https://www.clickcar.store/cdn/shop/products/G2225011R-G2225011R-MASTER_KING_1_1220x_crop_center.png?v=1696430675")
+    if not st.session_state.auto_part_image_link:
+        st.write("No auto part images available yet.")
+    else:
+        # image = Image.open("G2225011R-MASTER_KING.png")
+        # st.image(image, caption="Auto Part Image", use_column_width=True)
+        st.write("Auto Part Link 1: https://www.clickcar.store/products/amortiguadores-hyundai-tucson-derecho-trasero-marca-master-king?_pos=1&_sid=66f9b566e&_ss=r")
+        st.image(st.session_state.auto_part_image_link[-1], caption="Test Auto Part Image", width=300)
