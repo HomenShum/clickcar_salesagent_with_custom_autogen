@@ -81,13 +81,13 @@ def sparse_dense_retrieval(query, count):
     for record in formatted_results:
         # Create a string concatenating the text of interest for BM25 search
         text_for_bm25 = ''.join([str(value) for value in record])
-        print("\n\ntext_for_bm25:", text_for_bm25)
+        #print("\n\ntext_for_bm25:", text_for_bm25)
 
         # Create a Document object with the concatenated text
         document = Document(text=text_for_bm25)
         documents.append(document)
 
-    print("len docs:", len(documents))
+    #print("len docs:", len(documents))
 
     if not os.path.exists("./bge_onnx"):
         OptimumEmbedding.create_and_save_optimum_model(
@@ -98,13 +98,13 @@ def sparse_dense_retrieval(query, count):
     service_context = ServiceContext.from_defaults(embed_model = embed_model)
     nodes = service_context.node_parser.get_nodes_from_documents(documents)
 
-    print("\n Initializing BM25 retriever...")
+    #print("\n Initializing BM25 retriever...")
     bm25retriever = BM25Retriever.from_defaults(nodes=nodes, similarity_top_k=15)
 
-    print("\n Retrieving documents...")
+    #print("\n Retrieving documents...")
     
     nodes = bm25retriever.retrieve(query)
-    print("len nodes:", len(nodes))
+    #print("len nodes:", len(nodes))
 
     output_data = []
 
@@ -112,20 +112,20 @@ def sparse_dense_retrieval(query, count):
         try:
             result = node.text
         except ValueError as e:
-            print(f"Error converting to dictionary: {e}")
+            #print(f"Error converting to dictionary: {e}")
             continue
 
         confidence_score = node.score
 
-        # print (f"Result: {result}")
-        print (f"Confidence score: {confidence_score}")
+        # #print (f"Result: {result}")
+        #print (f"Confidence score: {confidence_score}")
 
         json = {"result": result, "confidence_score": confidence_score}
         # add to output_data
         output_data.append(json)
 
     # show confidence scores
-    # print (output_data)
+    # #print (output_data)
 
     ##### Dense: Cohere Rerank #####
 
@@ -150,7 +150,7 @@ def sparse_dense_retrieval(query, count):
         } for result in results.results
     ]
 
-    print(formatted_results)
+    #print(formatted_results)
     return formatted_results
 
 from openai import OpenAI
@@ -424,7 +424,7 @@ if prompt := st.chat_input("Any auto part that you are looking for in ClickCar?"
         #summary
         st.session_state.summary.append(summarize_all_messages(prompt))
 
-print("\ndebug prompt: ", prompt, "\n")
+#print("\ndebug prompt: ", prompt, "\n")
 
 
 def parse_and_format_part_details(details):
@@ -434,7 +434,7 @@ def parse_and_format_part_details(details):
     formatted_details = ""
     for detail in details:
         try:
-            # Debugging: Print the type and value of 'detail'
+            # Debugging: #print the type and value of 'detail'
             st.write("Type of detail:", type(detail))
             st.write("Value of detail:", detail)
 
@@ -442,7 +442,7 @@ def parse_and_format_part_details(details):
             if isinstance(detail, dict) and 'part_details' in detail:
                 part_detail_str = detail['part_details']
 
-                # Debugging: Print the type and value of 'part_detail_str'
+                # Debugging: #print the type and value of 'part_detail_str'
                 st.write("Type of part_detail_str:", type(part_detail_str))
                 st.write("Value of part_detail_str:", part_detail_str)
 
