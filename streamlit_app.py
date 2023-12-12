@@ -1,6 +1,5 @@
 import logging
 import sys
-import os
 
 logging.basicConfig(stream=sys.stdout, level=logging.INFO)
 logging.getLogger().handlers = []
@@ -88,6 +87,7 @@ def sparse_dense_retrieval(query, count):
         documents.append(document)
 
     #print("len docs:", len(documents))
+
 
     if not os.path.exists("./bge_onnx"):
         OptimumEmbedding.create_and_save_optimum_model(
@@ -296,9 +296,9 @@ salesperson_system_prompt = (
     It is also recommended to check the engine bases. 
 
     Recommended products:	
-    Link 1. https://www.clickcar.store/products/amortiguadores-hyundai-tucson-derecho-trasero-marca-master-king?_pos=1&_sid=66f9b566e&_ss=r	
-    Link 2. https://www.clickcar.store/products/amortiguadores-hyundai-tucson-izquierdo-trasero-marca-master-king?_pos=2&_sid=66f9b566e&_ss=r	
-    Link 3. https://www.clickcar.store/products/base-de-motor-para-hyundai-tucson-motor-2-0-lts-2006-s-m?_pos=5&_sid=66f9b566e&_ss=r
+    Link 1. https://www.clickcar.store/products/product-1-Technical-Link
+    Link 2. https://www.clickcar.store/products/product-2-Techincal-Link
+    Link 3. https://www.clickcar.store/products/product-3-Technical-Link
 
     Confidence Score: 
     Provide a confidence score for each recommendation "Low | Medium | High"
@@ -358,6 +358,7 @@ if st.button("Clear Messages"):
     st.session_state.auto_part_criteria = []
     st.session_state.auto_part_details = []
     st.session_state.summary = []
+    st.session_state.auto_part_image_link = []
     st.rerun()
     st.stop()
 ###
@@ -411,6 +412,9 @@ if prompt := st.chat_input("Any auto part that you are looking for in ClickCar?"
             full_response += str(response.choices[0].delta.content)
             message_placeholder.markdown(full_response + "▌")
         message_placeholder.markdown(full_response + "\n")
+        links = re.findall('http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\\(\\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+', full_response)
+        #print ('\nlinks\n', links)
+        st.session_state.auto_part_image_link.append(links)
         st.session_state.messages.append({"role": "assistant", "content": full_response})
         st.session_state.memory.append(memory_summary_agent(". New information from Assistant about user needs: " 
                                                             + auto_part_criteria_response 
@@ -512,11 +516,18 @@ with st.sidebar:
 
     # Test Image Feature
     st.header("Auto Part Image (Test)")
-    st.session_state.auto_part_image_link.append("https://www.clickcar.store/cdn/shop/products/G2225011R-G2225011R-MASTER_KING_1_1220x_crop_center.png?v=1696430675")
     if not st.session_state.auto_part_image_link:
         st.write("No auto part images available yet.")
-    else:
-        # image = Image.open("G2225011R-MASTER_KING.png")
-        # st.image(image, caption="Auto Part Image", use_column_width=True)
-        st.write("Auto Part Link 1: https://www.clickcar.store/products/amortiguadores-hyundai-tucson-derecho-trasero-marca-master-king?_pos=1&_sid=66f9b566e&_ss=r")
+        st.session_state.auto_part_image_link.append("https://www.clickcar.store/cdn/shop/products/G2225011R-G2225011R-MASTER_KING_1_1220x_crop_center.png?v=1696430675")
+        st.write("Test Auto Part Link: https://www.clickcar.store/products/amortiguadores-hyundai-tucson-derecho-trasero-marca-master-king?_pos=1&_sid=66f9b566e&_ss=r")
         st.image(st.session_state.auto_part_image_link[-1], caption="Test Auto Part Image", width=300)
+    else:
+        st.info("This feature would work if dataset contains image links. Right now dataset doesn't have the image links")
+        if st.session_state.auto_part_image_link:
+            for i in range(1, min(st.session_state.count + 1, len(st.session_state.auto_part_image_link) + 1)):
+                links = st.session_state.auto_part_image_link[-i]
+                for link in links:
+                    # prevent single string such as h in https from being iterated
+                    if len(link) > 10:                        
+                        st.write("Auto Part Link: ", link)
+                        st.image(link, caption=f"Auto Part Image{i}", width=300)
