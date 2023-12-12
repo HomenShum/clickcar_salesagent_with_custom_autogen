@@ -294,7 +294,7 @@ salesperson_system_prompt = (
     -----------------------------
     \nRecommended products with links:	
 
-    \nRefer to Potential Response, provide a brief description of the problem and the recommended auto parts with the retrieved auto part information from inventory database. Ignore previous information if it is not relevant to the user need and user prompt.
+    \nProblem and Solution:
 
     \nClickCar Store Link: https://www.clickcar.store/products
     
@@ -313,6 +313,7 @@ salesperson_system_prompt = (
 
     -----------------------------
     Definitions:
+    Problem and Solution: Explain the problem given the user need and user prompt and why the recommended auto parts are relevant to the user need and user prompt.
     Links: Provide links to the recommended auto parts from inventory database. If no link then provide default to https://www.clickcar.store/products
     Product Name: Provide the name of the auto part
     Confidence Score: Provide a confidence score for each recommendation "Low | Medium | High"
