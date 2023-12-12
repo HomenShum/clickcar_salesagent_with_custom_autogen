@@ -80,13 +80,13 @@ def sparse_dense_retrieval(query, count):
     for record in formatted_results:
         # Create a string concatenating the text of interest for BM25 search
         text_for_bm25 = ''.join([str(value) for value in record])
-        #print("\n\ntext_for_bm25:", text_for_bm25)
+        # print("\n\ntext_for_bm25:", text_for_bm25)
 
         # Create a Document object with the concatenated text
         document = Document(text=text_for_bm25)
         documents.append(document)
 
-    #print("len docs:", len(documents))
+    # print("len docs:", len(documents))
 
 
     if not os.path.exists("./bge_onnx"):
@@ -98,13 +98,13 @@ def sparse_dense_retrieval(query, count):
     service_context = ServiceContext.from_defaults(embed_model = embed_model)
     nodes = service_context.node_parser.get_nodes_from_documents(documents)
 
-    #print("\n Initializing BM25 retriever...")
+    # print("\n Initializing BM25 retriever...")
     bm25retriever = BM25Retriever.from_defaults(nodes=nodes, similarity_top_k=15)
 
-    #print("\n Retrieving documents...")
+    # print("\n Retrieving documents...")
     
     nodes = bm25retriever.retrieve(query)
-    #print("len nodes:", len(nodes))
+    # print("len nodes:", len(nodes))
 
     output_data = []
 
@@ -112,20 +112,20 @@ def sparse_dense_retrieval(query, count):
         try:
             result = node.text
         except ValueError as e:
-            #print(f"Error converting to dictionary: {e}")
+            print(f"Error converting to dictionary: {e}")
             continue
 
         confidence_score = node.score
 
-        # #print (f"Result: {result}")
-        #print (f"Confidence score: {confidence_score}")
+        # print (f"Result: {result}")
+        # print (f"Confidence score: {confidence_score}")
 
         json = {"result": result, "confidence_score": confidence_score}
         # add to output_data
         output_data.append(json)
 
     # show confidence scores
-    # #print (output_data)
+    # print (output_data)
 
     ##### Dense: Cohere Rerank #####
 
@@ -150,7 +150,7 @@ def sparse_dense_retrieval(query, count):
         } for result in results.results
     ]
 
-    #print(formatted_results)
+    # print(formatted_results)
     return formatted_results
 
 from openai import OpenAI
@@ -290,21 +290,37 @@ salesperson_system_prompt = (
     "Good Concise Example: This noise may be due to a lack of grease in the bushings and bearings. For this reason, we recommend that you re-grease the steering system or change the bushings and bearings of your Jeep Grand Cherokee. Annex spare parts for your failure."
     "Good Concise Example: This failure may be due to damage to the radiator, hoses or water pump, it is recommended to check these auto parts. Annex spare parts for your failure."
     """
-    Schema:
-    For the Hyundai Tucson suspension system;
-    I recommend that you change the entire set of shock absorbers, bushings and bearings
-    It is also recommended to check the engine bases. 
+    Schema / Response Format for when the user needs are clear and relevant to the user prompt:
+    -----------------------------
+    \nRecommended products with links:	
 
-    Recommended products:	
-    Link 1. https://www.clickcar.store/products/product-1-Technical-Link
-    Link 2. https://www.clickcar.store/products/product-2-Techincal-Link
-    Link 3. https://www.clickcar.store/products/product-3-Technical-Link
+    \nBrief description of the problem and the recommended auto parts with the retrieved auto part information from inventory database. Ignore previous information if it is not relevant to the user need and user prompt.
 
-    Confidence Score: 
-    Provide a confidence score for each recommendation "Low | Medium | High"
+    \nClickCar Store Link: https://www.clickcar.store/products
+    
+    \n\nLink 1. https://www.clickcar.store/products/product-1-Technical-Link
+        \nProduct Name: 
+        \nConfidence Score:
+        \nRationale:
+    \n\nLink 2. https://www.clickcar.store/products/product-2-Techincal-Link
+        \nProduct Name:
+        \nConfidence Score:
+        \nRationale:
+    \n\nLink 3. https://www.clickcar.store/products/product-3-Technical-Link
+        \nProduct Name:
+        \nConfidence Score:
+        \nRationale:
 
-    Rationale:
-    Explain the problem given the user need and user prompt and why the recommended auto parts are relevant to the user need and user prompt.
+    -----------------------------
+    Definitions:
+    Links: Provide links to the recommended auto parts from inventory database. If no link then provide default to https://www.clickcar.store/products
+    Product Name: Provide the name of the auto part
+    Confidence Score: Provide a confidence score for each recommendation "Low | Medium | High"
+    Rationale: Explain the problem given the user need and user prompt and why the recommended auto parts are relevant to the user need and user prompt.
+
+    Edge Cases: User need is not clear, user need is not relevant to the user prompt, user need is not relevant to the recommended auto parts, user need is not relevant to the retrieved auto part information from inventory database.
+
+    If user need is not clear, ask user to clarify the user need. If user need is not relevant to the user prompt, ask user to clarify the user need. If user need is not relevant to the recommended auto parts, ask user to clarify the user need. If user need is not relevant to the retrieved auto part information from inventory database, ask user to clarify the user need.
     """
 )
 
@@ -347,6 +363,31 @@ with st.sidebar:
         st.success("Valid API Key")
         st.session_state["openai_api_key"] = selected_key
 
+    st.divider()
+
+    st.subheader("Translate to Espanol or English")
+    
+    if st.button("Translate to Espanol"):
+        for i in st.session_state.messages:
+            i["content"] = translate_to_esp(i["content"])
+        st.session_state.auto_part_criteria.append(translate_to_esp(st.session_state.auto_part_criteria[-1]))
+        st.session_state.summary.append(translate_to_esp(st.session_state.summary[-1]))
+        st.rerun()
+
+    if st.button("Translate to English"):
+        for i in st.session_state.messages:
+            i["content"] = translate_to_eng(i["content"])
+        st.session_state.auto_part_criteria.append(translate_to_eng(st.session_state.auto_part_criteria[-1]))
+        st.session_state.summary.append(translate_to_eng(st.session_state.summary[-1]))
+        st.rerun()
+
+    st.divider()
+
+    st.session_state.count = st.number_input('Insert desired number of retrieval', value=3, max_value=10, min_value=1, step=1)
+    print("\n\nst.session_state.count:", st.session_state.count)
+    
+    st.divider()
+
 ### Streamlit UI ###
 st.title("ClickCar Chat Agents")
 st.subheader("What auto parts are you looking for from ClickCar store?\n")
@@ -378,13 +419,16 @@ if prompt := st.chat_input("Any auto part that you are looking for in ClickCar?"
     auto_part_criteria_response = ""
     for response in client.chat.completions.create(
         model=st.session_state["openai_model"],
-        messages=[{"role": "system", "content": 'List most confident potential auto part needs using key words, stay concise.'}, 
+        messages=[{"role": "system", "content": 'List most confident potential auto part needs using only list of key words, stay concise.'}, 
                     {"role": "user", "content": 'User input:' + prompt}],
         stream=True,
     ):
         auto_part_criteria_response += str(response.choices[0].delta.content)
     st.session_state.auto_part_criteria.append(auto_part_criteria_response)
+    print ("\nauto_part_criteria_response:\n", auto_part_criteria_response)
 
+
+    print("\nCount sanity check:\n", st.session_state.count)
     sparse_dense_retrieval_response = sparse_dense_retrieval(auto_part_criteria_response, st.session_state.count)
     if "error" in sparse_dense_retrieval_response:
         st.session_state.auto_part_details.append(f"Based on user input: {prompt}. No auto part found.")
@@ -401,9 +445,9 @@ if prompt := st.chat_input("Any auto part that you are looking for in ClickCar?"
             model=st.session_state["openai_model"],
             messages=[
                 {"role": "system", "content": salesperson_system_prompt},
-                {"role": "user", "content": ". \nPriornConversation:\n"+ st.session_state.memory[-1] + ". \nIgnore this information if it is not relevant to user needs. \n"},
-                {"role": "user", "content": ". \nUser prompt: \n"+ prompt + ". \n User needs: \n" + auto_part_criteria_response},
-                {"role": "user", "content": ". \nRetrieved auto part from inventory database: \n"+ str(st.session_state.auto_part_details[-1])},
+                {"role": "user", "content": ". \nPrior Conversation:\n"+ st.session_state.memory[-1] + ". \nIgnore this information if it is not relevant to recommended auto parts. \n"},
+                {"role": "user", "content": ". \nUser prompt: \n"+ prompt + ". \n Recommended auto parts: \n" + auto_part_criteria_response},
+                {"role": "user", "content": ". \nRetrieved auto part information from inventory database: \n"+ str(st.session_state.auto_part_details[-1])},
                 # {"role": "user", "content": f". \n1. Diagnose automotive issue from customer's description.\n 2. Suggest potential causes and solutions.\n 3. Provide {count} auto part recommendation, description, rationale, confidence, and links given information from user needs: \n {auto_part_criteria_response} \nShow Confidence: Low | Medium | High"},
             ],
             stop=["None"],
@@ -413,7 +457,7 @@ if prompt := st.chat_input("Any auto part that you are looking for in ClickCar?"
             message_placeholder.markdown(full_response + "▌")
         message_placeholder.markdown(full_response + "\n")
         links = re.findall('http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\\(\\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+', full_response)
-        #print ('\nlinks\n', links)
+        print ('\nlinks\n', links)
         st.session_state.auto_part_image_link.append(links)
         st.session_state.messages.append({"role": "assistant", "content": full_response})
         st.session_state.memory.append(memory_summary_agent(". New information from Assistant about user needs: " 
@@ -428,7 +472,7 @@ if prompt := st.chat_input("Any auto part that you are looking for in ClickCar?"
         #summary
         st.session_state.summary.append(summarize_all_messages(prompt))
 
-#print("\ndebug prompt: ", prompt, "\n")
+print("\ndebug prompt: ", prompt, "\n")
 
 
 def parse_and_format_part_details(details):
@@ -438,7 +482,7 @@ def parse_and_format_part_details(details):
     formatted_details = ""
     for detail in details:
         try:
-            # Debugging: #print the type and value of 'detail'
+            # Debugging: Print the type and value of 'detail'
             st.write("Type of detail:", type(detail))
             st.write("Value of detail:", detail)
 
@@ -446,7 +490,7 @@ def parse_and_format_part_details(details):
             if isinstance(detail, dict) and 'part_details' in detail:
                 part_detail_str = detail['part_details']
 
-                # Debugging: #print the type and value of 'part_detail_str'
+                # Debugging: Print the type and value of 'part_detail_str'
                 st.write("Type of part_detail_str:", type(part_detail_str))
                 st.write("Value of part_detail_str:", part_detail_str)
 
@@ -473,31 +517,8 @@ def parse_and_format_part_details(details):
 
     return formatted_details
 
-
 with st.sidebar:
-    if st.button("Translate to Espanol"):
-        for i in st.session_state.messages:
-            i["content"] = translate_to_esp(i["content"])
-        st.session_state.auto_part_criteria.append(translate_to_esp(st.session_state.auto_part_criteria[-1]))
-        st.session_state.summary.append(translate_to_esp(st.session_state.summary[-1]))
-        st.rerun()
-
-    if st.button("Translate to English"):
-        for i in st.session_state.messages:
-            i["content"] = translate_to_eng(i["content"])
-        st.session_state.auto_part_criteria.append(translate_to_eng(st.session_state.auto_part_criteria[-1]))
-        st.session_state.summary.append(translate_to_eng(st.session_state.summary[-1]))
-        st.rerun()
-
-    st.divider()
-
-    count = st.number_input('Insert desired number of retrieval', value=3, max_value=10, min_value=1, step=1)
-
-    if count:
-        st.session_state.count = count
     
-    st.divider()
-
     st.header("Auto Part Criteria")
     if not st.session_state.auto_part_criteria:
         st.write("No auto part criteria yet.")
@@ -531,3 +552,4 @@ with st.sidebar:
                     if len(link) > 10:                        
                         st.write("Auto Part Link: ", link)
                         st.image(link, caption=f"Auto Part Image{i}", width=300)
+
