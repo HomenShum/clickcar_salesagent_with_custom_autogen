@@ -187,7 +187,8 @@ def memory_summary_agent(memory):
             {"role": "system", "content": 'Summarize the conversation so far:'},
             {"role": "user", "content": memory},
         ],
-        stop=["None"],        
+        stop=["None"],
+        seed=42,   
     )
     text = summarization.choices[0].message.content.strip()
     text = re.sub("\s+", " ", text)
@@ -423,6 +424,7 @@ if prompt := st.chat_input("Any auto part that you are looking for in ClickCar?"
         messages=[{"role": "system", "content": 'List most confident potential auto part needs using only list of key words, stay concise.'}, 
                     {"role": "user", "content": 'User input:' + prompt}],
         stream=True,
+        seed = 42,
     ):
         auto_part_criteria_response += str(response.choices[0].delta.content)
     st.session_state.auto_part_criteria.append(auto_part_criteria_response)
@@ -453,6 +455,7 @@ if prompt := st.chat_input("Any auto part that you are looking for in ClickCar?"
             ],
             stop=["None"],
             stream=True,
+            seed=42,
         ):
             full_response += str(response.choices[0].delta.content)
             message_placeholder.markdown(full_response + "▌")
