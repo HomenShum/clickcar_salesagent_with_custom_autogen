@@ -301,12 +301,10 @@ salesperson_system_prompt = (
     Link 3. https://www.clickcar.store/products/base-de-motor-para-hyundai-tucson-motor-2-0-lts-2006-s-m?_pos=5&_sid=66f9b566e&_ss=r
 
     Confidence Score: 
-    High
+    Provide a confidence score for each recommendation "Low | Medium | High"
 
     Rationale:
-    1. The user is looking for a suspension system for a Hyundai Tucson.
-    2. The user is looking for a suspension system for a Hyundai Tucson.
-    3. The user is looking for a suspension system for a Hyundai Tucson.
+    Explain the problem given the user need and user prompt and why the recommended auto parts are relevant to the user need and user prompt.
     """
 )
 
