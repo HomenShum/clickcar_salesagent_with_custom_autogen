@@ -1,5 +1,6 @@
 import logging
 import sys
+import os
 
 logging.basicConfig(stream=sys.stdout, level=logging.INFO)
 logging.getLogger().handlers = []
@@ -88,10 +89,10 @@ def sparse_dense_retrieval(query, count):
 
     print("len docs:", len(documents))
 
-
-    # OptimumEmbedding.create_and_save_optimum_model(
-    #     "BAAI/bge-base-en-v1.5", "./bge_onnx"
-    # )
+    if not os.path.exists("./bge_onnx"):
+        OptimumEmbedding.create_and_save_optimum_model(
+            "BAAI/bge-base-en-v1.5", "./bge_onnx"
+    )
 
     embed_model = OptimumEmbedding(folder_name="./bge_onnx", embed_batch_size=100)
     service_context = ServiceContext.from_defaults(embed_model = embed_model)
