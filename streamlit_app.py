@@ -369,18 +369,44 @@ with st.sidebar:
 
     st.subheader("Translate to Espanol or English")
     
+    # if st.button("Translate to Espanol"):
+    #     for i in st.session_state.messages:
+    #         i["content"] = translate_to_esp(i["content"])
+    #     st.session_state.auto_part_criteria.append(translate_to_esp(st.session_state.auto_part_criteria[-1]))
+    #     st.session_state.summary.append(translate_to_esp(st.session_state.summary[-1]))
+    #     st.rerun()
+
+    # if st.button("Translate to English"):
+    #     for i in st.session_state.messages:
+    #         i["content"] = translate_to_eng(i["content"])
+    #     st.session_state.auto_part_criteria.append(translate_to_eng(st.session_state.auto_part_criteria[-1]))
+    #     st.session_state.summary.append(translate_to_eng(st.session_state.summary[-1]))
+    #     st.rerun()
+    
     if st.button("Translate to Espanol"):
         for i in st.session_state.messages:
             i["content"] = translate_to_esp(i["content"])
-        st.session_state.auto_part_criteria.append(translate_to_esp(st.session_state.auto_part_criteria[-1]))
-        st.session_state.summary.append(translate_to_esp(st.session_state.summary[-1]))
+        if st.session_state.auto_part_criteria:
+            st.session_state.auto_part_criteria.append(translate_to_esp(st.session_state.auto_part_criteria[-1]))
+        else:
+            st.toast("No auto part criteria yet.")
+        if st.session_state.summary:
+            st.session_state.summary.append(translate_to_esp(st.session_state.summary[-1]))
+        else:
+            st.toast("No summary yet.")
         st.rerun()
 
     if st.button("Translate to English"):
         for i in st.session_state.messages:
             i["content"] = translate_to_eng(i["content"])
-        st.session_state.auto_part_criteria.append(translate_to_eng(st.session_state.auto_part_criteria[-1]))
-        st.session_state.summary.append(translate_to_eng(st.session_state.summary[-1]))
+        if st.session_state.auto_part_criteria:
+            st.session_state.auto_part_criteria.append(translate_to_eng(st.session_state.auto_part_criteria[-1]))
+        else:
+            st.toast("No auto part criteria yet.")
+        if st.session_state.summary:
+            st.session_state.summary.append(translate_to_eng(st.session_state.summary[-1]))
+        else:
+            st.toast("No summary yet.")
         st.rerun()
 
     st.divider()
