@@ -394,7 +394,7 @@ with st.sidebar:
             st.session_state.summary.append(translate_to_esp(st.session_state.summary[-1]))
         else:
             st.toast("No summary yet.")
-        st.rerun()
+        # st.rerun()
 
     if st.button("Translate to English"):
         for i in st.session_state.messages:
@@ -407,7 +407,7 @@ with st.sidebar:
             st.session_state.summary.append(translate_to_eng(st.session_state.summary[-1]))
         else:
             st.toast("No summary yet.")
-        st.rerun()
+        # st.rerun()
 
     st.divider()
 
